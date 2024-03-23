@@ -2,35 +2,47 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/joakimen/awsvault/pkg/aws"
 	"github.com/spf13/cobra"
+	"os"
+	"os/exec"
 )
 
 // execCmd represents the exec command
 var execCmd = &cobra.Command{
 	Use:   "exec",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Start a subshell with temporary credentials",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("exec called")
+		execFn()
 	},
+}
+
+func execFn() {
+	configFile, err := aws.ReadConfig()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "couldn't read configuration file: %v\n", err)
+		os.Exit(1)
+	}
+
+	profiles := aws.ParseAWSProfiles(configFile)
+	if profiles == nil {
+		fmt.Fprintf(os.Stderr, "no assumable profiles found in configuration file\n")
+		os.Exit(1)
+	}
+
+	selectedProfile := aws.FuzzySelectAWSProfile(profiles)
+
+	command := exec.Command("aws-vault", "exec", selectedProfile.Name)
+	command.Stdin = os.Stdin
+	command.Stdout = os.Stdout
+	command.Stderr = os.Stderr
+	err = command.Run()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error running aws-vault exec: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 func init() {
 	rootCmd.AddCommand(execCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// execCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// execCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
