@@ -21,9 +21,7 @@ var loginCmd = &cobra.Command{
 
 func loginFn() {
 
-	var (
-		chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-	)
+	var chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 	conf, err := aws.ReadConfig()
 	if err != nil {
@@ -40,13 +38,14 @@ func loginFn() {
 	profile := aws.FuzzySelectAWSProfile(profiles)
 
 	command := exec.Command("aws-vault", "login", profile.Name, "--stdout", "--prompt", "osascript")
-	stdout, err := command.Output()
+	output, err := command.CombinedOutput()
+
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error getting login link using aws-vault login: %v\n", err)
+		fmt.Fprintf(os.Stderr, "error getting login link using aws-vault login: %v\n%s\n", err, output)
 		os.Exit(1)
 	}
 
-	loginLink := string(stdout)
+	loginLink := string(output)
 	xdgDataDir := filepath.Join(fs.XDGDataDir(), "aws_chrome", profile.Name)
 	xdgCacheDir := filepath.Join(fs.XDGCacheDir(), "aws_chrome", profile.Name)
 
