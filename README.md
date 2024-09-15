@@ -4,7 +4,7 @@ Provides convenience functions for working with AWS profiles via aws-vault.
 
 ## Features
 
-- Opens a sandboxed Google Chrome instance for a profile
+- Opens an AWS profile in a sandboxed [Firefox Multi-Account Container](https://support.mozilla.org/en-US/kb/containers) or Google Chrome instance
 - Open a subshell with AWS credentials for a profile
 - List all AWS profiles
 - Fuzzy-select a profile
