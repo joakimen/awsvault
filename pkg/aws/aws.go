@@ -3,21 +3,29 @@ package aws
 import (
 	"encoding/json"
 	"fmt"
-	fz "github.com/ktr0731/go-fuzzyfinder"
-	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
 	"strings"
+
+	fz "github.com/ktr0731/go-fuzzyfinder"
+	"gopkg.in/ini.v1"
 )
 
 type Profile struct {
 	Name           string
 	Region         string
-	RoleArn        string
 	MfaSerial      string
 	SourceProfile  string
 	IncludeProfile string
 	Output         string
+
+	// IAM User profiles
+	RoleArn string
+
+	// SSO User profiles
+	SsoSession   string
+	SsoAccountID string
+	SsoRoleName  string
 }
 
 func ReadConfig() (*ini.File, error) {
@@ -49,11 +57,17 @@ func ParseAWSProfiles(awsConfigFile *ini.File) []Profile {
 					profile.IncludeProfile = key.Value()
 				case "output":
 					profile.Output = key.Value()
+				case "sso_session":
+					profile.SsoSession = key.Value()
+				case "sso_account_id":
+					profile.SsoAccountID = key.Value()
+				case "sso_role_name":
+					profile.SsoRoleName = key.Value()
 				}
 			}
 
 			// if a profile is missing RoleArn, it's a meta-profile and should be ignored
-			if profile.RoleArn != "" {
+			if profile.RoleArn != "" || profile.SsoRoleName != "" {
 				awsProfiles = append(awsProfiles, profile)
 			}
 		}
